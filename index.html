@@ -120,7 +120,7 @@
       for(let i=1;i<=maxIter;i++){
         xm = (a+b)/2;
         let fxm = func(xm);
-        let err = prev_xm===null ? null : Math.abs(xm-prev_xm);
+        let err = prev_xm === null ? null : Math.abs(xm - prev_xm)/Math.abs(xm);
         iterations.push({iter:i,xl:a,xr:b,xm:xm,fxm:fxm,error:err});
         if (!isFinite(fxm)) return {error:'f(xm) คำนวณไม่ได้'};
         if (Math.abs(fxm)===0 || (err!==null && err<=tol)){
