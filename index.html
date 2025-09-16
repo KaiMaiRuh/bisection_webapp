@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Bisection Method — เครื่องมือแบบอินเตอร์แอคทีฟ</title>
+  <title>Bisection Method</title>
   <style>
     :root{--bg:#0f172a;--card:#0b1220;--accent:#06b6d4;--muted:#94a3b8;--glass:rgba(255,255,255,0.04)}
     *{box-sizing:border-box}
@@ -33,36 +33,36 @@
 <body>
   <div class="wrap">
     <header>
-      <h1>Bisection Method — เครื่องมือช่วยคิดเชิงโต้ตอบ (ภาษไทย)</h1>
-      <div style="font-size:13px;color:var(--muted)">แสดงผล: ตารางการทำงาน + กราฟ</div>
+      <h1>Bisection Method</h1>
+      <div style="font-size:13px;color:var(--muted)">ตาราง + กราฟ แสดงการทำงาน</div>
     </header>
 
     <div class="grid">
       <div class="card">
-        <label for="expr">สมการ f(x) (ใช้ x เป็นตัวแปร, ฟังก์ชัน Math ใช้ชื่อปกติ เช่น sin, cos, exp, pow)</label>
-        <input id="expr" type="text" value="x**3 - x - 2" placeholder="ตัวอย่าง: 45*x - 2 หรือ Math.sin(x) หรือ sin(x)" />
+        <label for="expr">สมการ f(x) (เช่น 45*x - 2 หรือ sin(x))</label>
+        <input id="expr" type="text" placeholder="กรอกสมการ เช่น x^3 - x - 2" />
 
         <div style="height:10px"></div>
         <div class="row">
           <div>
-            <label for="xl">ค่า XL (จุดซ้าย)</label>
-            <input id="xl" type="number" step="any" value="1" />
+            <label for="xl">ค่า XL</label>
+            <input id="xl" type="number" step="any" placeholder="เช่น 1" />
           </div>
           <div>
-            <label for="xr">ค่า XR (จุดขวา)</label>
-            <input id="xr" type="number" step="any" value="2" />
+            <label for="xr">ค่า XR</label>
+            <input id="xr" type="number" step="any" placeholder="เช่น 2" />
           </div>
         </div>
 
         <div style="height:10px"></div>
         <div class="row">
           <div>
-            <label for="tol">Error (tolerance) | ตัวอย่าง: 1e-6</label>
-            <input id="tol" type="text" value="1e-6" />
+            <label for="tol">Error</label>
+            <input id="tol" type="text" placeholder="เช่น 1e-6" />
           </div>
           <div>
-            <label for="maxIter">Max Iter</label>
-            <input id="maxIter" type="number" value="50" />
+            <label for="maxIter">Max Iteration</label>
+            <input id="maxIter" type="number" placeholder="เช่น 50" />
           </div>
         </div>
 
@@ -76,12 +76,12 @@
           <div class="meta">
             <div id="status">สถานะ: ยังไม่ได้คำนวณ</div>
             <div id="iters">Iterations: -</div>
-            <div id="root">root: -</div>
+            <div id="root">Root: -</div>
           </div>
         </div>
 
         <div style="margin-top:12px">
-          <label>ตารางผลลัพธ์ (iteration)</label>
+          <label>Result</label>
           <div style="overflow:auto;max-height:300px">
             <table id="table">
               <thead>
@@ -91,191 +91,161 @@
             </table>
           </div>
         </div>
-
       </div>
 
       <div>
         <div class="card">
-          <label>กราฟฟังก์ชัน (ช่วงแสดงผล จะขยายจาก XL/XR เล็กน้อย)</label>
+          <label>กราฟฟังก์ชัน</label>
           <canvas id="plot" width="800" height="320"></canvas>
-          <div class="footer">จุดสีเขียว = XL, สีแดง = XR, สีส้ม = XM(จุดกึ่งกลางสุดท้าย)</div>
+          <div class="footer">เขียว = XL, แดง = XR, ส้ม = XM ทุก iteration (วงใหญ่ = XM สุดท้าย)</div>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    // เรียกใช้ Math functions แบบไม่ต้องพิมพ์ Math. โดยใช้ with(Math)
     function makeFunc(expr){
-      // แปลง ^ -> ** เพื่อให้ผู้ใช้พิมพ์ power แบบง่าย
       expr = expr.replace(/\^/g, '**');
-      // ถ้าใช้ sin(x) ให้สามารถใช้ได้ (with Math)
       try{
-        // new Function จะรับ x และคืนค่า
         return new Function('x', 'with(Math){ return (' + expr + '); }');
-      }catch(e){
-        return null;
-      }
+      }catch(e){ return null; }
     }
 
     function bisection(func, a, b, tol, maxIter){
-      let fa = func(a);
-      let fb = func(b);
-      if (!isFinite(fa) || !isFinite(fb)) return {error:'f(x) ไม่สามารถประเมินค่าได้ที่จุดเริ่มต้น'};
-      if (fa * fb > 0) return {error:'f(a) และ f(b) ไม่มีเครื่องหมายตรงข้าม — อาจไม่มีรากหรือเลือกช่วงผิด'};
+      let fa = func(a), fb = func(b);
+      if (!isFinite(fa) || !isFinite(fb)) return {error:'f(x) ไม่สามารถประเมินค่าได้'};
+      if (fa * fb > 0) return {error:'f(a) และ f(b) ไม่มีเครื่องหมายตรงข้าม'};
 
-      let iterations = [];
-      let xm = null;
-      let prev_xm = null;
+      let iterations = [], xm=null, prev_xm=null;
       for(let i=1;i<=maxIter;i++){
-        xm = (a + b) / 2;
+        xm = (a+b)/2;
         let fxm = func(xm);
-        let err = prev_xm === null ? null : Math.abs(xm - prev_xm);
-        iterations.push({iter:i, xl:a, xr:b, xm:xm, fxm:fxm, error:err});
-        if (!isFinite(fxm)) return {error:'f(xm) ไม่สามารถประเมินค่าได้ (เกิด NaN/Infinity)'};
-        if (Math.abs(fxm) === 0 || (err !== null && err <= tol)){
-          return {root:xm, iterations:iterations, converged:true};
+        let err = prev_xm===null ? null : Math.abs(xm-prev_xm);
+        iterations.push({iter:i,xl:a,xr:b,xm:xm,fxm:fxm,error:err});
+        if (!isFinite(fxm)) return {error:'f(xm) คำนวณไม่ได้'};
+        if (Math.abs(fxm)===0 || (err!==null && err<=tol)){
+          return {root:xm,iterations,converged:true};
         }
-        if (fa * fxm < 0){
-          b = xm; fb = fxm;
-        } else {
-          a = xm; fa = fxm;
-        }
-        prev_xm = xm;
+        if (fa*fxm<0){ b=xm; fb=fxm; } else { a=xm; fa=fxm; }
+        prev_xm=xm;
       }
-      return {root:xm, iterations:iterations, converged:false, message:'ถึงจำนวน iteration ที่กำหนด'};
+      return {root:xm,iterations,converged:false};
     }
 
     function formatNum(x){
-      if (x === null || x === undefined) return '-';
+      if (x===null) return '-';
       if (!isFinite(x)) return String(x);
-      if (Math.abs(x) < 1e-14) return '0';
       return Number(x).toPrecision(8).replace(/(?:\.0+$)|(?:(?<=\.[0-9]*[1-9])0+$)/,'');
     }
 
-    // plot
-    function drawPlot(canvas, func, xl, xr, lastXM){
+    function drawPlot(canvas, func, xl, xr, iterations){
       const ctx = canvas.getContext('2d');
-      const W = canvas.width; const H = canvas.height;
+      const W=canvas.width, H=canvas.height;
       ctx.clearRect(0,0,W,H);
-      ctx.fillStyle = '#061022'; ctx.fillRect(0,0,W,H);
-      // sample xs across a bit wider range
-      const pad = (xr - xl) * 0.2 || 1;
-      const xmin = xl - pad; const xmax = xr + pad;
-      const N = 800;
-      let ys = []; let xs = [];
-      let ymin=Infinity, ymax=-Infinity;
+      ctx.fillStyle='#061022'; ctx.fillRect(0,0,W,H);
+
+      const pad=(xr-xl)*0.2||1;
+      const xmin=xl-pad, xmax=xr+pad;
+      const N=1000;
+      let xs=[], ys=[], ymin=Infinity,ymax=-Infinity;
       for(let i=0;i<N;i++){
-        const x = xmin + (xmax - xmin) * (i/(N-1));
-        let y;
-        try{ y = func(x); }catch(e){ y = NaN; }
+        const x=xmin+(xmax-xmin)*i/(N-1);
+        let y; try{y=func(x);}catch(e){y=NaN;}
         xs.push(x); ys.push(y);
         if(isFinite(y)){ if(y<ymin) ymin=y; if(y>ymax) ymax=y; }
       }
-      if (ymin === Infinity) { ymin=-1; ymax=1; }
-      // ensure some vertical padding
-      const ypad = (ymax - ymin) * 0.2 || 1;
-      ymin -= ypad; ymax += ypad;
+      if(ymin===Infinity){ymin=-1;ymax=1;}
+      const ypad=(ymax-ymin)*0.2||1; ymin-=ypad;ymax+=ypad;
 
-      // helpers: map to canvas
-      const mapX = x => ( (x - xmin) / (xmax - xmin) ) * W;
-      const mapY = y => H - ( (y - ymin) / (ymax - ymin) ) * H;
+      const mapX=x=>(x-xmin)/(xmax-xmin)*W;
+      const mapY=y=>H-(y-ymin)/(ymax-ymin)*H;
 
-      // axes
-      ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth=1;
-      // x-axis (y=0)
-      if (ymin < 0 && ymax > 0){
-        const y0 = mapY(0);
-        ctx.beginPath(); ctx.moveTo(0,y0); ctx.lineTo(W,y0); ctx.stroke();
-      }
-      // y-axis (x=0)
-      if (xmin < 0 && xmax > 0){
-        const x0 = mapX(0);
-        ctx.beginPath(); ctx.moveTo(x0,0); ctx.lineTo(x0,H); ctx.stroke();
-      }
+      ctx.strokeStyle='rgba(255,255,255,0.06)';
+      if(ymin<0&&ymax>0){const y0=mapY(0);ctx.beginPath();ctx.moveTo(0,y0);ctx.lineTo(W,y0);ctx.stroke();}
+      if(xmin<0&&xmax>0){const x0=mapX(0);ctx.beginPath();ctx.moveTo(x0,0);ctx.lineTo(x0,H);ctx.stroke();}
 
-      // plot function line
       ctx.beginPath(); ctx.lineWidth=2; ctx.strokeStyle='#8ab4ff';
       let started=false;
       for(let i=0;i<N;i++){
-        const x = xs[i]; const y = ys[i];
-        if (!isFinite(y)) { started=false; continue; }
-        const px = mapX(x); const py = mapY(y);
-        if (!started) { ctx.moveTo(px,py); started=true; } else ctx.lineTo(px,py);
+        const x=xs[i], y=ys[i];
+        if(!isFinite(y)){started=false;continue;}
+        const px=mapX(x), py=mapY(y);
+        if(!started){ctx.moveTo(px,py);started=true;} else ctx.lineTo(px,py);
       }
       ctx.stroke();
 
-      // mark xl / xr / lastXM
-      const drawMarker = (x, color, label) => {
-        const px = mapX(x); if (px<0 || px>W) return;
-        ctx.beginPath(); ctx.moveTo(px,0); ctx.lineTo(px,H); ctx.strokeStyle=color; ctx.lineWidth=1.2; ctx.stroke();
-        // dot
-        ctx.beginPath(); ctx.arc(px, mapY( (ymin+ymax)/2 ), 4, 0, Math.PI*2); ctx.fillStyle=color; ctx.fill();
-        // label
-        ctx.fillStyle=color; ctx.font='12px Inter, Arial'; ctx.fillText(label + '='+formatNum(x), px+6, 18);
-      };
+      // XM ทุก iteration
+      iterations.forEach(it=>{
+        const px=mapX(it.xm), py=mapY(it.fxm);
+        ctx.beginPath();
+        ctx.arc(px,py,3,0,2*Math.PI);
+        ctx.fillStyle='#f97316'; ctx.fill();
+      });
 
-      drawMarker(xl, '#22c55e', 'XL');
-      drawMarker(xr, '#ef4444', 'XR');
-      if (lastXM !== null) drawMarker(lastXM, '#fb923c', 'XM');
+      // markers
+      const drawMarker=(x,color,label)=>{
+        const px=mapX(x);
+        ctx.beginPath(); ctx.moveTo(px,0); ctx.lineTo(px,H);
+        ctx.strokeStyle=color; ctx.stroke();
+        ctx.fillStyle=color; ctx.font='12px Inter,Arial';
+        ctx.fillText(label+'='+formatNum(x),px+6,18);
+      };
+      drawMarker(xl,'#22c55e','XL');
+      drawMarker(xr,'#ef4444','XR');
+
+      if(iterations.length){
+        const last=iterations[iterations.length-1];
+        const px=mapX(last.xm), py=mapY(last.fxm);
+        ctx.beginPath(); ctx.arc(px,py,6,0,2*Math.PI);
+        ctx.fillStyle='#fb923c'; ctx.fill();
+      }
     }
 
-    // UI wiring
-    const runBtn = document.getElementById('runBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const tableBody = document.querySelector('#table tbody');
-    const status = document.getElementById('status');
-    const itersBox = document.getElementById('iters');
-    const rootBox = document.getElementById('root');
-    const plotCanvas = document.getElementById('plot');
+    const runBtn=document.getElementById('runBtn');
+    const resetBtn=document.getElementById('resetBtn');
+    const tableBody=document.querySelector('#table tbody');
+    const status=document.getElementById('status');
+    const itersBox=document.getElementById('iters');
+    const rootBox=document.getElementById('root');
+    const plotCanvas=document.getElementById('plot');
 
-    runBtn.addEventListener('click', ()=>{
-      const expr = document.getElementById('expr').value.trim();
-      const xl = parseFloat(document.getElementById('xl').value);
-      const xr = parseFloat(document.getElementById('xr').value);
-      const tol = parseFloat(document.getElementById('tol').value);
-      const maxIter = parseInt(document.getElementById('maxIter').value,10);
-      if (isNaN(xl) || isNaN(xr)) { status.innerText='สถานะ: ค่า XL/XR ไม่ถูกต้อง'; return; }
-      if (xl >= xr) { status.innerText='สถานะ: ต้องกำหนด XL < XR'; return; }
-      const func = makeFunc(expr);
-      if (!func){ status.innerText='สถานะ: สมการไม่ถูกต้อง'; return; }
+    runBtn.addEventListener('click',()=>{
+      const expr=document.getElementById('expr').value.trim();
+      const xl=parseFloat(document.getElementById('xl').value);
+      const xr=parseFloat(document.getElementById('xr').value);
+      const tol=parseFloat(document.getElementById('tol').value);
+      const maxIter=parseInt(document.getElementById('maxIter').value,10);
+      if(isNaN(xl)||isNaN(xr)){status.innerText='สถานะ: XL/XR ไม่ถูกต้อง';return;}
+      if(xl>=xr){status.innerText='สถานะ: ต้องมี XL < XR';return;}
+      const func=makeFunc(expr); if(!func){status.innerText='สถานะ: สมการไม่ถูกต้อง';return;}
 
-      status.innerText='สถานะ: กำลังคำนวณ...';
-      setTimeout(()=>{ // allow UI update
-        const res = bisection(func, xl, xr, tol, maxIter);
-        if (res.error){ status.innerText='สถานะ: ' + res.error; return; }
-        // fill table
-        tableBody.innerHTML='';
-        res.iterations.forEach(row=>{
-          const tr = document.createElement('tr');
-          tr.innerHTML = `<td>${row.iter}</td><td>${formatNum(row.xl)}</td><td>${formatNum(row.xr)}</td><td>${formatNum(row.xm)}</td><td>${formatNum(row.fxm)}</td><td>${row.error===null?'-':formatNum(row.error)}</td>`;
-          tableBody.appendChild(tr);
-        });
-        status.innerText = 'สถานะ: เสร็จสิ้น' + (res.converged? ' (converged)':' (ไม่ converged)');
-        itersBox.innerText = 'Iterations: ' + res.iterations.length;
-        rootBox.innerText = 'root: ' + formatNum(res.root);
-        // draw plot with the last xm
-        const lastXM = res.iterations.length ? res.iterations[res.iterations.length-1].xm : null;
-        drawPlot(plotCanvas, func, xl, xr, lastXM);
-      },50);
+      const res=bisection(func,xl,xr,tol,maxIter);
+      if(res.error){status.innerText='สถานะ: '+res.error;return;}
+      tableBody.innerHTML='';
+      res.iterations.forEach(r=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${r.iter}</td><td>${formatNum(r.xl)}</td><td>${formatNum(r.xr)}</td><td>${formatNum(r.xm)}</td><td>${formatNum(r.fxm)}</td><td>${r.error===null?'-':formatNum(r.error)}</td>`;
+        tableBody.appendChild(tr);
+      });
+      status.innerText='สถานะ: เสร็จสิ้น '+(res.converged?'(converged)':'(ไม่ converged)');
+      itersBox.innerText='Iterations: '+res.iterations.length;
+      rootBox.innerText='Root: '+formatNum(res.root);
+      drawPlot(plotCanvas,func,xl,xr,res.iterations);
     });
 
-    resetBtn.addEventListener('click', ()=>{
-      document.getElementById('expr').value = 'x**3 - x - 2';
-      document.getElementById('xl').value = '1';
-      document.getElementById('xr').value = '2';
-      document.getElementById('tol').value = '1e-6';
-      document.getElementById('maxIter').value = '50';
-      tableBody.innerHTML=''; status.innerText='สถานะ: รีเซ็ตแล้ว'; itersBox.innerText='Iterations: -'; rootBox.innerText='root: -';
-      const func = makeFunc('x**3 - x - 2'); drawPlot(plotCanvas, func, 1, 2, null);
+    resetBtn.addEventListener('click',()=>{
+      document.getElementById('expr').value='';
+      document.getElementById('xl').value='';
+      document.getElementById('xr').value='';
+      document.getElementById('tol').value='';
+      document.getElementById('maxIter').value='';
+      tableBody.innerHTML=''; status.innerText='สถานะ: รีเซ็ตแล้ว'; itersBox.innerText='Iterations: -'; rootBox.innerText='Root: -';
+      const func=makeFunc('x'); drawPlot(plotCanvas,func,-5,5,[]);
     });
 
-    // initial draw
-    window.addEventListener('load', ()=>{
-      const func = makeFunc(document.getElementById('expr').value);
-      drawPlot(plotCanvas, func, parseFloat(document.getElementById('xl').value), parseFloat(document.getElementById('xr').value), null);
+    window.addEventListener('load',()=>{
+      const func=makeFunc('x'); drawPlot(plotCanvas,func,-5,5,[]);
     });
-
   </script>
 </body>
 </html>
